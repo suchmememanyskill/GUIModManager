@@ -136,99 +136,101 @@ int CheckTouchCollision(ShapeLinker_t *list){
     return -1;
 }
 
-int RunSelection(ShapeLinker_t *selection, Context_t ctx){
-    if (selection->type == ButtonType){
-        SETBIT(((Button_t*)selection->item)->options, BUTTON_PRESSED, 0);
-        if (((Button_t*)selection->item)->function != NULL)
-            return ((Button_t*)selection->item)->function(ctx);
+int RunSelection(Context_t *ctx){
+    if (ctx->selected->type == ButtonType){
+        Button_t *btn = ctx->selected->item;
+        SETBIT(btn->options, BUTTON_PRESSED, 0);
+        if (btn->function != NULL)
+            return btn->function(ctx);
     }
-    else if (selection->type == ListViewType){
-        SETBIT(((ListView_t*)selection->item)->options, LIST_PRESSED, 0);
-        if (((ListView_t*)selection->item)->function != NULL)
-            return ((ListView_t*)selection->item)->function(ctx);
+    else if (ctx->selected->type == ListViewType){
+        ListView_t *lv = ctx->selected->item;
+        SETBIT(lv->options, LIST_PRESSED, 0);
+        if (lv->function != NULL)
+            return lv->function(ctx);
     }
 
     return 0;
 }
 
-void ActivateSelection(ShapeLinker_t *selection){
-    if (selection->type == ButtonType){
-        ((Button_t*)selection->item)->options |= BUTTON_PRESSED;
+void ActivateSelection(Context_t *ctx){
+    if (ctx->selected->type == ButtonType){
+        ((Button_t*)ctx->selected->item)->options |= BUTTON_PRESSED;
     }
-    else if (selection->type == ListViewType){
-        ((ListView_t*)selection->item)->options |= LIST_PRESSED;
+    else if (ctx->selected->type == ListViewType){
+        ((ListView_t*)ctx->selected->item)->options |= LIST_PRESSED;
     }
 }
 
-void SelectSelection(ShapeLinker_t *selection){
-    if (selection->type == ButtonType){
-        ((Button_t*)selection->item)->options |= BUTTON_HIGHLIGHT;
+void SelectSelection(Context_t *ctx){
+    if (ctx->selected->type == ButtonType){
+        ((Button_t*)ctx->selected->item)->options |= BUTTON_HIGHLIGHT;
     }
-    else if (selection->type == ListViewType){
-        ((ListView_t*)selection->item)->options |= LIST_SELECTED;
+    else if (ctx->selected->type == ListViewType){
+        ((ListView_t*)ctx->selected->item)->options |= LIST_SELECTED;
     }
 }
 
 int menuRun = 1;
 
-Context_t MakeMenu(ShapeLinker_t *list, int startelement){
-    int selectionMade = 0, currentSelectionIndex = startelement, touchSelection = -1, timer = 0, timeOfTimer = 25;
-
-    ShapeLinker_t *selection = ShapeLinkOffset(list, currentSelectionIndex);
-
-    SelectSelection(selection);
+Context_t MakeMenu(ShapeLinker_t *in, int startelement){
+    int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 25;
+    Context_t ctx = {startelement, 0, NULL, in, 0,0,0};
+    ctx.selected = ShapeLinkOffset(ctx.all, ctx.curOffset);
+    SelectSelection(&ctx);
 
     while (menuRun){
         hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        u64 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
-        u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
-
+        ctx.kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        ctx.kUp = hidKeysUp(CONTROLLER_P1_AUTO);
+        ctx.kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+        
         if (timer > 0){
             timer--;
         }
 
-        if (kDown & KEY_A){
-            ActivateSelection(selection);
+        if (ctx.kDown & KEY_A){
+            ActivateSelection(&ctx);
             selectionMade = 1;
         }
 
-        else if (kUp & KEY_A && selectionMade){
+        else if (ctx.kUp & KEY_A && selectionMade){
             selectionMade = 0;
-            Context_t ctx = {currentSelectionIndex, OriginFunction,selection, list, kUp};
+            ctx.origin = OriginFunction;
 
-            if (RunSelection(selection, ctx) < 0)
+            if (RunSelection(&ctx) < 0)
                 return ctx; 
         }
 
-        else if (kDown & KEY_PLUS){
+        else if (ctx.kDown & KEY_PLUS){
             menuRun = 0;
-            return (Context_t){currentSelectionIndex, OriginPlus, selection, list, KEY_PLUS};
+            ctx.origin = OriginPlus;
+            return ctx;
         }
 
-        else if (kUp & KEY_TOUCH && touchSelection >= 0){
+        else if (ctx.kUp & KEY_TOUCH && touchSelection >= 0){
 
-            if (selection->type == ButtonType){
-                SETBIT(((Button_t*)selection->item)->options, BUTTON_HIGHLIGHT, 0);
+            if (ctx.selected->type == ButtonType){
+                SETBIT(((Button_t*)ctx.selected->item)->options, BUTTON_HIGHLIGHT, 0);
             }
-            else if (selection->type == ListViewType){
-                SETBIT(((ListView_t*)selection->item)->options, LIST_SELECTED, 0);
+            else if (ctx.selected->type == ListViewType){
+                SETBIT(((ListView_t*)ctx.selected->item)->options, LIST_SELECTED, 0);
             }
 
-            currentSelectionIndex = touchSelection;
-            selection = ShapeLinkOffset(list, currentSelectionIndex);
+            ctx.curOffset = touchSelection;
+            ctx.origin = OriginFunction;
+            ctx.selected = ShapeLinkOffset(ctx.all, ctx.curOffset);
             touchSelection = -1;
-            Context_t ctx = {currentSelectionIndex, OriginFunction, selection, list, kUp};
 
-            if (RunSelection(selection, ctx) < 0)
+            if (RunSelection(&ctx) < 0)
                 return ctx; 
         }
 
-        else if (kHeld & KEY_TOUCH){
-            touchSelection = CheckTouchCollision(list);
+        else if (ctx.kHeld & KEY_TOUCH){
+            touchSelection = CheckTouchCollision(ctx.all);
         }
 
-        else if (kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP)){            
+        else if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP)){            
             int direction = 0, res = -1;
         
             if (timer == 0){
@@ -236,17 +238,17 @@ Context_t MakeMenu(ShapeLinker_t *list, int startelement){
                 if (timeOfTimer > 6)
                     timeOfTimer -= 5;
 
-                if (kHeld & (KEY_LSTICK_DOWN | KEY_DDOWN))
+                if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_DDOWN))
                     direction = DirectionDown;
-                else if (kHeld & (KEY_LSTICK_UP | KEY_DUP))
+                else if (ctx.kHeld & (KEY_LSTICK_UP | KEY_DUP))
                     direction = DirectionUp;
-                else if (kHeld & (KEY_LSTICK_LEFT | KEY_DLEFT))
+                else if (ctx.kHeld & (KEY_LSTICK_LEFT | KEY_DLEFT))
                     direction = DirectionLeft;
-                else if (kHeld & (KEY_LSTICK_RIGHT | KEY_DRIGHT))
+                else if (ctx.kHeld & (KEY_LSTICK_RIGHT | KEY_DRIGHT))
                     direction = DirectionRight;
 
-                if (selection->type == ListViewType){
-                    ListView_t *lv = (ListView_t*)selection->item;
+                if (ctx.selected->type == ListViewType){
+                    ListView_t *lv = (ListView_t*)ctx.selected->item;
 
                     lv->options |= LIST_SELECTED;
 
@@ -258,46 +260,51 @@ Context_t MakeMenu(ShapeLinker_t *list, int startelement){
                         lv->highlight--;
                     }
                     else {
-                        res = _JumpToClosestBox(list, direction, selection, currentSelectionIndex);
+                        res = _JumpToClosestBox(ctx.all, direction, ctx.selected, ctx.curOffset);
                     }
                 }
                 else {
-                    ((Button_t*)selection->item)->options |= BUTTON_HIGHLIGHT;
-                    res = _JumpToClosestBox(list, direction, selection, currentSelectionIndex);
+                    ((Button_t*)ctx.selected->item)->options |= BUTTON_HIGHLIGHT;
+                    res = _JumpToClosestBox(ctx.all, direction, ctx.selected, ctx.curOffset);
                 }
 
                 if (res >= 0){
                     selectionMade = 0;
 
-                    if (selection->type == ButtonType){
-                        SETBIT(((Button_t*)selection->item)->options, (BUTTON_HIGHLIGHT | BUTTON_PRESSED), 0);
+                    if (ctx.selected->type == ButtonType){
+                        SETBIT(((Button_t*)ctx.selected->item)->options, (BUTTON_HIGHLIGHT | BUTTON_PRESSED), 0);
                     }
-                    else if (selection->type == ListViewType){
-                        SETBIT(((ListView_t*)selection->item)->options, (LIST_PRESSED | LIST_SELECTED), 0);
+                    else if (ctx.selected->type == ListViewType){
+                        SETBIT(((ListView_t*)ctx.selected->item)->options, (LIST_PRESSED | LIST_SELECTED), 0);
                     }
 
-                    currentSelectionIndex = res;
-                    selection = ShapeLinkOffset(list, currentSelectionIndex);
+                    ctx.curOffset = res;
+                    ctx.selected = ShapeLinkOffset(ctx.all, ctx.curOffset);
 
-                    SelectSelection(selection);
+                    SelectSelection(&ctx);
                 }
             }
         }
-        else if (kDown){
-            return (Context_t){currentSelectionIndex, OriginButtonPress, selection, list, kDown};
+        else if (ctx.kDown){
+            ctx.origin = OriginButtonPress;
+            return ctx;
         }
-        else if (!(kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP))){
+        else if (!(ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP))){
             timer = 0;
             timeOfTimer = 25;
         }
 
-        if (selection->type == ListViewType){
-            if (((ListView_t *)selection->item)->changeSelection != NULL)
-                ((ListView_t *)selection->item)->changeSelection((Context_t){currentSelectionIndex, OriginFunction, selection, list, kDown});
+        if (ctx.selected->type == ListViewType){
+            if (((ListView_t *)ctx.selected->item)->changeSelection != NULL){
+                ctx.origin = OriginFunction;
+                ((ListView_t *)ctx.selected->item)->changeSelection(&ctx);
+            }
+                
         }
 
-        RenderShapeLinkList(list);
+        RenderShapeLinkList(ctx.all);
     }
 
-    return (Context_t){currentSelectionIndex, OriginPlus, selection, list, KEY_PLUS};
+    ctx.origin = OriginPlus;
+    return ctx;
 }

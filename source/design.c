@@ -12,11 +12,11 @@
 #include <switch.h>
 #include <stdio.h>
 
-int exitFunc(Context_t ctx){
+int exitFunc(Context_t *ctx){
     return -1;
 }
 
-int rebootRCM(Context_t ctx){
+int rebootRCM(Context_t *ctx){
     if (R_FAILED(splInitialize())) 
         return -1;
 
@@ -25,7 +25,7 @@ int rebootRCM(Context_t ctx){
     return -1;
 }
 
-int PowerOff(Context_t ctx){
+int PowerOff(Context_t *ctx){
     if (R_FAILED(spsmInitialize()))
         return -1;
 
@@ -33,11 +33,11 @@ int PowerOff(Context_t ctx){
     return -1;
 }
 
-int RebootToHekate(Context_t ctx){
+int RebootToHekate(Context_t *ctx){
     return RebootToPayload("/bootloader/update.bin");
 }
 
-int RebootToAtmosphere(Context_t ctx){
+int RebootToAtmosphere(Context_t *ctx){
     return RebootToPayload("/atmosphere/reboot_payload.bin");
 }
 
@@ -145,62 +145,58 @@ ShapeLinker_t *CreateConflictMenu(ShapeLinker_t *list){
     return out;
 }
 
-int PowerMenu(Context_t ctx){
+int PowerMenu(Context_t *ctx){
     ShapeLinker_t *menu = CreatePowerMenu();
 
-    Context_t newCtx = {5, OriginButtonPress, NULL, NULL, 0};
-    while (newCtx.origin < OriginFunction){
-        newCtx = MakeMenu(menu, newCtx.offset);
+    Context_t newCtx = {5};
+    do {
+        newCtx = MakeMenu(menu, newCtx.curOffset);
         if (newCtx.kDown & KEY_B)
             break;
-    }
+    } while (newCtx.origin < OriginFunction);
 
     ShapeLinkDispose(&menu);
 
     return 0;
 }
 
-int ModFolderMenu(Context_t ctx){
-    ListView_t *lv = CAST(ListView_t, ctx.item->item);
-    char *selection = CAST(char, ShapeLinkOffset(lv->text, lv->highlight)->item);
+int ModFolderMenu(Context_t *ctx){
+    ListView_t *lv = ctx->selected->item;
+    char *selection = ShapeLinkOffset(lv->text, lv->highlight)->item;
     ShapeLinker_t *menu = CreateModFolderMenu(selection);
 
-    Context_t newCtx = {5, OriginButtonPress, NULL, NULL, 0};
-    while (newCtx.origin < OriginFunction){
-        newCtx = MakeMenu(menu, newCtx.offset);
+    Context_t newCtx = {5};
+    do {
+        newCtx = MakeMenu(menu, newCtx.curOffset);
         if (newCtx.kDown & KEY_B)
             break;
-    }
+    } while (newCtx.origin < OriginFunction);
 
     ShapeLinkDispose(&menu);
 
     return 0;
 }
 
-int ModMenuSelectionChange(Context_t ctx){
-    ListView_t *lv = CAST(ListView_t, ctx.item->item);
+int ModMenuSelectionChange(Context_t *ctx){
+    ListView_t *lv = ctx->selected->item;
     if (lv->highlight != lastSelection){
         lastSelection = lv->highlight;
         
-        ShapeLinker_t *gameitem = ShapeLinkOffset(ctx.all, 2);
-        TextCentered_t *gameitemcast = CAST(TextCentered_t, gameitem->item);
+        TextCentered_t *gameitemcast = ShapeLinkOffset(ctx->all, 2)->item;
         char *gamename = gameitemcast->text.text;
-
-        ShapeLinker_t *modentry = ShapeLinkOffset(lv->text, lv->highlight);
-        char *modname = CAST(char, modentry->item);
+        char *modname = ShapeLinkOffset(lv->text, lv->highlight)->item;
 
         char *fullpath = CopyTextArgsUtil("/mods/%s/%s", gamename, modname);
         char *checkpath = CopyTextArgsUtil("%s/ENABLED", fullpath);
         char *descpath = CopyTextArgsUtil("%s/DESCRIPTION", fullpath);
 
-        ShapeLinker_t *descobj = ShapeLinkOffset(ctx.all, 7);
+        ShapeLinker_t *descobj = ShapeLinkOffset(ctx->all, 7);
         TextCentered_t *desctextbox = CAST(TextCentered_t, descobj->item);
 
         ShapeLinker_t *installobj = descobj->next;
         Button_t *installbtn = CAST(Button_t, installobj->item);
 
-        ShapeLinker_t *modnameobj = installobj->next;
-        TextCentered_t *modnamebox = CAST(TextCentered_t, modnameobj->item);
+        TextCentered_t *modnamebox = installobj->next->item;
 
         free(installbtn->text);
         free(desctextbox->text.text);
@@ -231,17 +227,16 @@ int ModMenuSelectionChange(Context_t ctx){
     return 0;
 }
 
-int InstallMod(Context_t ctx){
+int InstallMod(Context_t *ctx){
     ShapeLinker_t *menu = CreateInstallScreen();
     RenderShapeLinkList(menu);
 
-    ShapeLinker_t *gameitem = ShapeLinkOffset(ctx.all, 2);
-    TextCentered_t *gameitemcast = CAST(TextCentered_t, gameitem->item);
+    TextCentered_t *gameitemcast = ShapeLinkOffset(ctx->all, 2)->item;
     char *gamename = gameitemcast->text.text;
    
-    ListView_t *lv = CAST(ListView_t, ShapeLinkOffset(ctx.all, 5)->item);
+    ListView_t *lv = ShapeLinkOffset(ctx->all, 5)->item;
     ShapeLinker_t *selectedmodentry = ShapeLinkOffset(lv->text, lv->highlight);
-    char *modname = CAST(char, selectedmodentry->item);
+    char *modname = selectedmodentry->item;
 
     char *fullpath = CopyTextArgsUtil("/mods/%s/%s", gamename, modname);
     char *checkpath = CopyTextArgsUtil("%s/ENABLED", fullpath);
@@ -253,15 +248,14 @@ int InstallMod(Context_t ctx){
 
     ShapeLinker_t *conflictMenu = CreateConflictMenu(conflict);
 
-    ShapeLinker_t *toptextitem = ShapeLinkOffset(menu, 3);
-    TextCentered_t *toptext = CAST(TextCentered_t, toptextitem->item);
+    TextCentered_t *toptext = ShapeLinkOffset(menu, 3)->item;
 
-    Button_t *installbtn = CAST(Button_t, ctx.item->item);
+    Button_t *installbtn = ctx->selected->item;
 
     if (!ACCESS(checkpath)){
         if (conflict != NULL){
             free(toptext->text.text);
-            toptext->text.text = CopyTextArgsUtil("%d file conflicts found!", ShapeLinkCount(conflict));
+            toptext->text.text = CopyTextArgsUtil("%d file conflict(s) found!", ShapeLinkCount(conflict));
             ShapeLinker_t *last = ShapeLinkOffset(menu, ShapeLinkCount(menu) - 1);
 
             ShapeLinkAdd(&menu, ButtonCreate(POS(300, 435, 226, 75), COLOR_DARKGREY, COLOR_BLUE, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Show Conflicts", FONT_TEXT[FSize28], exitFunc), ButtonType);
@@ -269,28 +263,28 @@ int InstallMod(Context_t ctx){
             ShapeLinkAdd(&menu, ButtonCreate(POS(753, 435, 227, 75), COLOR_DARKGREY, COLOR_RED, COLOR_WHITE, COLOR_DARKRED, 0, ButtonStyleBottomStrip, "Overwrite", FONT_TEXT[FSize28], exitFunc), ButtonType);
 
             
-            Context_t newCtx = {6, OriginButtonPress, NULL, NULL, 0};
-            while (newCtx.origin < OriginFunction){
-                newCtx = MakeMenu(menu, newCtx.offset);
+            Context_t newCtx = {6};
+            do {
+                newCtx = MakeMenu(menu, newCtx.curOffset);
                 if (newCtx.kDown & KEY_B) 
                     break;
 
-                if (newCtx.offset == 4 && newCtx.origin == OriginFunction){
-                    Context_t newerCtx = {0, OriginButtonPress, NULL, NULL, 0};
+                if (newCtx.curOffset == 4 && newCtx.origin == OriginFunction){
+                    Context_t newerCtx = {0};
 
-                    while (newerCtx.origin < OriginFunction){
-                        newerCtx = MakeMenu(conflictMenu, newerCtx.offset);
+                    do {
+                        newerCtx = MakeMenu(conflictMenu, newerCtx.curOffset);
                         if (newerCtx.kDown & KEY_B) 
                             break;
-                    }
+                    } while (newerCtx.origin < OriginFunction);
 
                     newCtx.origin = OriginButtonPress;
                 }
-                if ((newCtx.offset == 5 && newCtx.origin == OriginFunction) || newCtx.origin == OriginPlus){
+                if ((newCtx.curOffset == 5 && newCtx.origin == OriginFunction) || newCtx.origin == OriginPlus){
                     goto out;
                 }
-            }
-
+            } while (newCtx.origin < OriginFunction);
+            
             ButtonFree(CAST(Button_t, last->next->next->next->item));
             ButtonFree(CAST(Button_t, last->next->next->item));
             ButtonFree(CAST(Button_t, last->next->item));

@@ -42,10 +42,10 @@ int main(int argc, char* argv[])
     else {
         ShapeLinker_t *mainMenu = CreateMainMenu();
     
-        Context_t ctx = {5, OriginButtonPress, NULL, NULL, 0};
-        while (ctx.origin < OriginFunction){
-            ctx = MakeMenu(mainMenu, ctx.offset);
-        }
+        Context_t ctx = {5};
+        do {
+            ctx = MakeMenu(mainMenu, ctx.curOffset);
+        } while (ctx.origin < OriginFunction);
 
         ShapeLinkDispose(&mainMenu);
     }

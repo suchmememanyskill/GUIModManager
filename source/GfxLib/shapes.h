@@ -92,12 +92,12 @@ enum ctxOrigin {
 };
 
 typedef struct {
-    int offset, origin;
-    ShapeLinker_t *item, *all;
-    u64 kDown;
+    int curOffset, origin;
+    ShapeLinker_t *selected, *all;
+    u64 kDown, kUp, kHeld;
 } Context_t;
 
-typedef int (*func_ptr)(Context_t ctx);
+typedef int (*func_ptr)(Context_t *ctx);
 
 #define SETBIT(object, shift, value) ((value) ? (object |= shift) : (object &= ~shift))
 #define BUTTON_DISABLED BIT(0)

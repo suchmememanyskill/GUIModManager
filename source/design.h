@@ -22,8 +22,8 @@
 #define COLOR_GREEN COLOR(0,255,0,255)
 #define COLOR_ORANGE COLOR(255,182,0,255)
 
-int PowerMenu(Context_t ctx);
+int PowerMenu(Context_t *ctx);
 ShapeLinker_t *CreateMainMenu();
-int ModFolderMenu(Context_t ctx);
-int InstallMod(Context_t ctx);
-int ModMenuSelectionChange(Context_t ctx);
+int ModFolderMenu(Context_t *ctx);
+int InstallMod(Context_t *ctx);
+int ModMenuSelectionChange(Context_t *ctx);
