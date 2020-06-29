@@ -132,7 +132,7 @@ typedef struct {
     SDL_Color primary, selected, pressed, textcolor;
     u8 options;
     int highlight;
-    u8 offset;
+    int offset;
     ShapeLinker_t *text;
     func_ptr function;
     func_ptr changeSelection;

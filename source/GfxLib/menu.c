@@ -116,8 +116,8 @@ int CheckTouchCollision(ShapeLinker_t *list){
                 continue;
 
             if (lv->pos.x < touchX && lv->pos.x + lv->pos.w > touchX && lv->pos.y < touchY && lv->pos.y + lv->pos.h > touchY){
-                int max = ShapeLinkCount(lv->text), pressedEntry = (touchY - lv->pos.y) / lv->entrySize;
-                lv->offset = 0;
+                int max = ShapeLinkCount(lv->text), pressedEntry = (touchY - lv->pos.y + lv->offset) / lv->entrySize;
+                //lv->offset = 0;
 
                 if (pressedEntry >= max)
                     continue;
@@ -172,7 +172,7 @@ void SelectSelection(ShapeLinker_t *selection){
 int menuRun = 1;
 
 Context_t MakeMenu(ShapeLinker_t *list, int startelement){
-    int selectionMade = 0, currentSelectionIndex = startelement, touchSelection = -1;
+    int selectionMade = 0, currentSelectionIndex = startelement, touchSelection = -1, timer = 0, timeOfTimer = 25;
 
     ShapeLinker_t *selection = ShapeLinkOffset(list, currentSelectionIndex);
 
@@ -183,6 +183,10 @@ Context_t MakeMenu(ShapeLinker_t *list, int startelement){
         u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
         u64 kUp = hidKeysUp(CONTROLLER_P1_AUTO);
         u64 kHeld = hidKeysHeld(CONTROLLER_P1_AUTO);
+
+        if (timer > 0){
+            timer--;
+        }
 
         if (kDown & KEY_A){
             ActivateSelection(selection);
@@ -224,57 +228,67 @@ Context_t MakeMenu(ShapeLinker_t *list, int startelement){
             touchSelection = CheckTouchCollision(list);
         }
 
-        else if (kDown & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP)){            
+        else if (kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP)){            
             int direction = 0, res = -1;
         
-            if (kDown & (KEY_LSTICK_DOWN | KEY_DDOWN))
-                direction = DirectionDown;
-            else if (kDown & (KEY_LSTICK_UP | KEY_DUP))
-                direction = DirectionUp;
-            else if (kDown & (KEY_LSTICK_LEFT | KEY_DLEFT))
-                direction = DirectionLeft;
-            else if (kDown & (KEY_LSTICK_RIGHT | KEY_DRIGHT))
-                direction = DirectionRight;
+            if (timer == 0){
+                timer = timeOfTimer;
+                if (timeOfTimer > 6)
+                    timeOfTimer -= 5;
 
-            if (selection->type == ListViewType){
-                ListView_t *lv = (ListView_t*)selection->item;
+                if (kHeld & (KEY_LSTICK_DOWN | KEY_DDOWN))
+                    direction = DirectionDown;
+                else if (kHeld & (KEY_LSTICK_UP | KEY_DUP))
+                    direction = DirectionUp;
+                else if (kHeld & (KEY_LSTICK_LEFT | KEY_DLEFT))
+                    direction = DirectionLeft;
+                else if (kHeld & (KEY_LSTICK_RIGHT | KEY_DRIGHT))
+                    direction = DirectionRight;
 
-                lv->options |= LIST_SELECTED;
+                if (selection->type == ListViewType){
+                    ListView_t *lv = (ListView_t*)selection->item;
 
-                int max = ShapeLinkCount(lv->text);
-                if (lv->highlight < max - 1 && direction == DirectionDown){
-                    lv->highlight++;
-                }
-                else if (lv->highlight > 0 && direction == DirectionUp){
-                    lv->highlight--;
+                    lv->options |= LIST_SELECTED;
+
+                    int max = ShapeLinkCount(lv->text);
+                    if (lv->highlight < max - 1 && direction == DirectionDown){
+                        lv->highlight++;
+                    }
+                    else if (lv->highlight > 0 && direction == DirectionUp){
+                        lv->highlight--;
+                    }
+                    else {
+                        res = _JumpToClosestBox(list, direction, selection, currentSelectionIndex);
+                    }
                 }
                 else {
+                    ((Button_t*)selection->item)->options |= BUTTON_HIGHLIGHT;
                     res = _JumpToClosestBox(list, direction, selection, currentSelectionIndex);
                 }
-            }
-            else {
-                ((Button_t*)selection->item)->options |= BUTTON_HIGHLIGHT;
-                res = _JumpToClosestBox(list, direction, selection, currentSelectionIndex);
-            }
 
-            if (res >= 0){
-                selectionMade = 0;
+                if (res >= 0){
+                    selectionMade = 0;
 
-                if (selection->type == ButtonType){
-                    SETBIT(((Button_t*)selection->item)->options, (BUTTON_HIGHLIGHT | BUTTON_PRESSED), 0);
+                    if (selection->type == ButtonType){
+                        SETBIT(((Button_t*)selection->item)->options, (BUTTON_HIGHLIGHT | BUTTON_PRESSED), 0);
+                    }
+                    else if (selection->type == ListViewType){
+                        SETBIT(((ListView_t*)selection->item)->options, (LIST_PRESSED | LIST_SELECTED), 0);
+                    }
+
+                    currentSelectionIndex = res;
+                    selection = ShapeLinkOffset(list, currentSelectionIndex);
+
+                    SelectSelection(selection);
                 }
-                else if (selection->type == ListViewType){
-                    SETBIT(((ListView_t*)selection->item)->options, (LIST_PRESSED | LIST_SELECTED), 0);
-                }
-
-                currentSelectionIndex = res;
-                selection = ShapeLinkOffset(list, currentSelectionIndex);
-
-                SelectSelection(selection);
             }
         }
         else if (kDown){
             return (Context_t){currentSelectionIndex, OriginButtonPress, selection, list, kDown};
+        }
+        else if (!(kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP))){
+            timer = 0;
+            timeOfTimer = 25;
         }
 
         if (selection->type == ListViewType){
