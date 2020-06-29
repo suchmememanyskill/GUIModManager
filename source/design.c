@@ -47,7 +47,7 @@ ShapeLinker_t *CreateMainMenu() { // Add functions later
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 150, SCREEN_W, SCREEN_H - 150), COLOR_LESSBLUEGREY, 1), RectangleType);
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 0, SCREEN_W, 50), COLOR_GREY, 1), RectangleType);
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 50, SCREEN_W, 100), COLOR_DARKERGREY, 1), RectangleType);
-    ShapeLinkAdd(&out, TextCenteredCreate(POS(0, 50, SCREEN_W, 100), "Welcome to [insert name here]", COLOR_WHITE, FONT_TEXT[FSize45]), TextCenteredType);
+    ShapeLinkAdd(&out, TextCenteredCreate(POS(0, 50, SCREEN_W, 100), "GUIModManager", COLOR_WHITE, FONT_TEXT[FSize45]), TextCenteredType);
     ShapeLinkAdd(&out, ButtonCreate(POS(200,0,200,50), COLOR_LIGHTGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleBottomStrip, "Power", FONT_TEXT[FSize28], PowerMenu), ButtonType);
 
     ShapeLinker_t *diritems;
@@ -78,12 +78,12 @@ ShapeLinker_t *CreatePowerMenu() {
     ShapeLinkAdd(&out, ButtonCreate(POS(200, 50, 200, 50), COLOR_DARKGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleTopStrip, "Back", FONT_TEXT[FSize28], exitFunc), ButtonType);
 
     payloadExists = (access("/atmosphere/reboot_payload.bin", F_OK) == -1) ? BUTTON_DISABLED : 0;
-    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150, 800, 50), COLOR_DARKERBLUE, COLOR_DARKERGREY, COLOR_WHITE, COLOR_DARKBLUE, payloadExists, ButtonStyleFlat, "Reboot to atmosphere/reboot_payload.bin", FONT_TEXT[FSize28], RebootToAtmosphere), ButtonType);
+    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150, 800, 50), COLOR_DARKGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, payloadExists, ButtonStyleBorder, "Reboot to atmosphere/reboot_payload.bin", FONT_TEXT[FSize28], RebootToAtmosphere), ButtonType);
 
     payloadExists = (access("/bootloader/update.bin", F_OK) == -1) ? BUTTON_DISABLED : 0;
-    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150 + 80, 800, 50), COLOR_DARKERBLUE, COLOR_DARKERGREY, COLOR_WHITE, COLOR_DARKBLUE, payloadExists, ButtonStyleFlat, "Reboot to bootloader/update.bin", FONT_TEXT[FSize28], RebootToHekate), ButtonType);
-    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150 + 160, 800, 50), COLOR_DARKERORANGE, COLOR_DARKERGREY, COLOR_WHITE, COLOR_DARKORANGE, 0, ButtonStyleFlat, "Reboot to RCM", FONT_TEXT[FSize28], rebootRCM), ButtonType);
-    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150 + 240, 800, 50), COLOR_DARKERRED, COLOR_DARKERGREY, COLOR_WHITE, COLOR_DARKRED, 0, ButtonStyleFlat, "Power Off", FONT_TEXT[FSize28], PowerOff), ButtonType);
+    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150 + 80, 800, 50), COLOR_DARKGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, payloadExists, ButtonStyleBorder, "Reboot to bootloader/update.bin", FONT_TEXT[FSize28], RebootToHekate), ButtonType);
+    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150 + 160, 800, 50), COLOR_DARKGREY, COLOR_ORANGE, COLOR_WHITE, COLOR_DARKORANGE, 0, ButtonStyleBorder, "Reboot to RCM", FONT_TEXT[FSize28], rebootRCM), ButtonType);
+    ShapeLinkAdd(&out, ButtonCreate(POS(240, 150 + 240, 800, 50), COLOR_DARKGREY, COLOR_RED, COLOR_WHITE, COLOR_DARKRED, 0, ButtonStyleBorder, "Power Off", FONT_TEXT[FSize28], PowerOff), ButtonType);
 
     return out;
 }
