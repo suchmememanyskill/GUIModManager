@@ -88,8 +88,11 @@ ShapeLinker_t *CreatePowerMenu() {
     return out;
 }
 
+static int lastSelection = -1;
+
 ShapeLinker_t *CreateModFolderMenu(char *gameName){
     ShapeLinker_t *out = NULL;
+    lastSelection = -1;
     char *folder = CopyTextArgsUtil("/mods/%s", gameName);
 
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 150, SCREEN_W, SCREEN_H - 150), COLOR_LESSBLUEGREY, 1), RectangleType);
@@ -99,13 +102,14 @@ ShapeLinker_t *CreateModFolderMenu(char *gameName){
     ShapeLinkAdd(&out, ButtonCreate(POS(200,0,200,50), COLOR_LIGHTGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleBottomStrip, "Power", FONT_TEXT[FSize28], PowerMenu), ButtonType);
     
     ShapeLinker_t *diritems;
-    diritems = ListFolder(folder);
+    diritems = ListFolderWithEnabledEntries(folder);
 
     if (diritems != NULL){
-        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W / 2, SCREEN_H - 150), 50, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, diritems, NULL, NULL, FONT_TEXT[FSize28]), ListViewType);
+        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W / 2, SCREEN_H - 150), 50, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, diritems, NULL, ModMenuSelectionChange, FONT_TEXT[FSize28]), ListViewType);
         ShapeLinkAdd(&out, RectangleCreate(POS(SCREEN_W / 2, 150, SCREEN_W / 2, SCREEN_H - 150), COLOR_BLUEGREY, 1), RectangleType);
-        ShapeLinkAdd(&out, TextCenteredCreate(POS(SCREEN_W / 2 + 10, 160, SCREEN_W / 2 - 20, SCREEN_H - 260), "No description...", COLOR_WHITE, FONT_TEXT[FSize28]), TextBoxType);
+        ShapeLinkAdd(&out, TextCenteredCreate(POS(SCREEN_W / 2 + 10, 160, SCREEN_W / 2 - 20, SCREEN_H - 320), "No description...", COLOR_WHITE, FONT_TEXT[FSize28]), TextBoxType);
         ShapeLinkAdd(&out, ButtonCreate(POS(SCREEN_W / 2 + 10, SCREEN_H - 85, SCREEN_W / 2 - 20, 75), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_DARKERGREY, 0, ButtonStyleBottomStrip, "Enable Mod", FONT_TEXT[FSize35], InstallMod), ButtonType);
+        ShapeLinkAdd(&out, TextCenteredCreate(POS(SCREEN_W / 2, SCREEN_H - 150, SCREEN_W / 2, 60), "[MOD]", COLOR_WHITE, FONT_TEXT[FSize28]), TextCenteredType);
     }
     
     ShapeLinkAdd(&out, ButtonCreate(POS(0,0,200,50), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Back", FONT_TEXT[FSize28], exitFunc), ButtonType);
@@ -174,7 +178,6 @@ int ModFolderMenu(Context_t ctx){
 }
 
 int ModMenuSelectionChange(Context_t ctx){
-    static int lastSelection = -1;
     ListView_t *lv = CAST(ListView_t, ctx.item->item);
     if (lv->highlight != lastSelection){
         lastSelection = lv->highlight;
@@ -196,7 +199,14 @@ int ModMenuSelectionChange(Context_t ctx){
         ShapeLinker_t *installobj = descobj->next;
         Button_t *installbtn = CAST(Button_t, installobj->item);
 
+        ShapeLinker_t *modnameobj = installobj->next;
+        TextCentered_t *modnamebox = CAST(TextCentered_t, modnameobj->item);
+
         free(installbtn->text);
+        free(desctextbox->text.text);
+        free(modnamebox->text.text);
+
+        modnamebox->text.text = CopyTextArgsUtil("Mod: %s", modname);
 
         if (ACCESS(checkpath)){
             installbtn->text = CopyTextUtil("Disable Mod");
@@ -204,7 +214,21 @@ int ModMenuSelectionChange(Context_t ctx){
         else {
             installbtn->text = CopyTextUtil("Enable Mod");
         }
+
+        if (ACCESS(descpath)){
+            FILE *desc = fopen(descpath, "r");
+            u8 *buff = calloc(513, 1);
+            fread(buff, 1, 512, desc);
+            fclose(desc);
+            desctextbox->text.text = CopyTextUtil((char*)buff);
+            free(buff);
+        }
+        else {
+            desctextbox->text.text = CopyTextUtil("No description...");
+        }
     }
+
+    return 0;
 }
 
 int InstallMod(Context_t ctx){
@@ -296,6 +320,7 @@ int InstallMod(Context_t ctx){
         fclose(checkfile);
 
         installbtn->text = CopyTextUtil("Disable Mod");
+        selectedmodentry->type = 2;
     }
     else {
         free(toptext->text.text);
@@ -315,6 +340,7 @@ int InstallMod(Context_t ctx){
         remove(checkpath);
 
         installbtn->text = CopyTextUtil("Enable Mod");
+        selectedmodentry->type = 1;
     }
     
 

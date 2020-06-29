@@ -28,6 +28,27 @@ ShapeLinker_t *ListFolder(char *path){
     return out;
 }
 
+ShapeLinker_t *ListFolderWithEnabledEntries(char *path){
+    ShapeLinker_t *out = NULL;
+
+    struct dirent *de;
+    DIR *dr = opendir(path);
+
+    if (dr == NULL)
+        return NULL;
+
+    while ((de = readdir(dr)) != NULL){
+        if (de->d_type == DT_DIR){
+            char *test = CopyTextArgsUtil("%s/%s/ENABLED", path, de->d_name);
+            ShapeLinkAdd(&out, CopyTextUtil(de->d_name), ACCESS(test) ? 2 : 1);
+            free(test);
+        }
+    }
+
+    closedir(dr);
+    return out;
+}
+
 char *cfwFolder = NULL;
 
 int SetCfwFolder(){
@@ -51,7 +72,7 @@ ShapeLinker_t *GetAllFilesFromFolder(char *path){
 
     while ((de = readdir(dr)) != NULL){
         if (de->d_type == DT_REG){
-            if (!strcmp(de->d_name, "ENABLED"))
+            if (!strcmp(de->d_name, "DESCRIPTION"))
                 continue;
             ShapeLinkAdd(&out, CopyTextArgsUtil("%s/%s", path, de->d_name), 0);
         }

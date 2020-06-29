@@ -14,3 +14,4 @@ int CopyDir(const char *src, const char *dst);
 int Copy(const char* src, const char* dst);
 int CopyContentsDir(const char *src, const char *dst);
 int mkDirBasedOnPathList(ShapeLinker_t *in);
+ShapeLinker_t *ListFolderWithEnabledEntries(char *path);

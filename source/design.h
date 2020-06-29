@@ -25,3 +25,4 @@ int PowerMenu(Context_t ctx);
 ShapeLinker_t *CreateMainMenu();
 int ModFolderMenu(Context_t ctx);
 int InstallMod(Context_t ctx);
+int ModMenuSelectionChange(Context_t ctx);
