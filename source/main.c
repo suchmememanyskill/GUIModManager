@@ -13,21 +13,43 @@
 #include "GfxLib/menu.h"
 #include "GfxLib/font.h"
 #include "design.h"
+#include "fs.h"
 
 
 int main(int argc, char* argv[])
 {
-    InitSDL();
-    FontInit();
+    int err = 0;
 
-    ShapeLinker_t *mainMenu = CreateMainMenu();
+    InitSDL();
+    err -= FontInit();
+    err -= SetCfwFolder();
+
+    if (err){
+        /*
+        ClearRenderer();
+        DrawTextSDL(TextCreate(10, 10, "Init failed! Press + to exit", COLOR(255,255,255,255), FONT_TEXT[FSize23]));
+        UpdateRenderer();
+
+        u64 kDown = 0;
+        while (!(kDown & KEY_PLUS)){
+            hidScanInput();
+            kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        }
+        */
+
+       // Just exit the app lol
+    }
+    else {
+        ShapeLinker_t *mainMenu = CreateMainMenu();
     
-    Context_t ctx = {5, OriginButtonPress, NULL, NULL, 0};
-    while (ctx.origin < OriginFunction){
-        ctx = MakeMenu(mainMenu, ctx.offset);
+        Context_t ctx = {5, OriginButtonPress, NULL, NULL, 0};
+        while (ctx.origin < OriginFunction){
+            ctx = MakeMenu(mainMenu, ctx.offset);
+        }
+
+        ShapeLinkDispose(&mainMenu);
     }
 
-    ShapeLinkDispose(&mainMenu);
     FontExit();
     ExitSDL();
     return 0;

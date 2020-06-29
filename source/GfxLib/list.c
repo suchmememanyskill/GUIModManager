@@ -89,3 +89,18 @@ int ShapeLinkCount(ShapeLinker_t *start){
 
     return count;
 }
+
+void ShapeLinkMergeLists(ShapeLinker_t **dst, ShapeLinker_t *add){
+    if (*dst == NULL){
+        *dst = add;
+    }
+    else {
+        ShapeLinker_t *iter = *dst;
+        
+        while (iter->next != NULL){
+            iter = iter->next;
+        }
+
+        iter->next = add;
+    }
+}

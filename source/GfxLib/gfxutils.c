@@ -8,8 +8,20 @@
 
 char *CopyTextUtil(const char *in){
     char *out;
-    out = calloc(strlen(in), 1);
+    out = calloc(strlen(in) + 1, 1);
     strcpy(out, in);
+    return out;
+}
+
+char *CopyTextLenUtil(const char *in, int len){
+    char *out;
+    int locallen = len;
+
+    if (locallen > strlen(in))
+        locallen = strlen(in);
+
+    out = calloc(locallen + 1, 1);
+    memcpy(out, in, locallen);
     return out;
 }
 

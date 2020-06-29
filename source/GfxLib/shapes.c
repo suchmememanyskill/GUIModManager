@@ -206,7 +206,24 @@ void DrawListView(ListView_t *listview){
 
     for (; link != NULL && curPixOffset < listview->pos.h; link = link->next){
         SizeInfo_t info = GetTextSizeSDL(listview->font, (char*)link->item);
-        Text_t text = {listview->pos.x + 5, listview->pos.y + curPixOffset + ((listview->entrySize - info.h) / 2), (char*)link->item, listview->textcolor, listview->font};
+        SDL_Color textColor;
+
+        switch (link->type){
+            case 0:
+                textColor = listview->textcolor;
+                break;
+            case 1:
+                textColor = COLOR(255,0,0,255);
+                break;
+            case 2:
+                textColor = COLOR(0,255,0,255);
+                break;
+            case 3:
+                textColor = COLOR(0,0,255,255);
+                break;
+        }
+
+        Text_t text = {listview->pos.x + 5, listview->pos.y + curPixOffset + ((listview->entrySize - info.h) / 2), (char*)link->item, textColor, listview->font};
 
         if (currentListOffset == listview->highlight && listview->options & LIST_SELECTED){
             Rectangle_t high = {POS(listview->pos.x, listview->pos.y + curPixOffset, listview->pos.w, listview->entrySize), (listview->options & LIST_PRESSED) ? listview->pressed : listview->selected, 1};
