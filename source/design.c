@@ -258,8 +258,6 @@ int InstallMod(Context_t ctx){
 
     Button_t *installbtn = CAST(Button_t, ctx.item->item);
 
-    free(installbtn->text);
-
     if (!ACCESS(checkpath)){
         if (conflict != NULL){
             free(toptext->text.text);
@@ -319,6 +317,7 @@ int InstallMod(Context_t ctx){
         FILE *checkfile = fopen(checkpath, "w");
         fclose(checkfile);
 
+        free(installbtn->text);
         installbtn->text = CopyTextUtil("Disable Mod");
         selectedmodentry->type = 2;
     }
@@ -339,6 +338,7 @@ int InstallMod(Context_t ctx){
 
         remove(checkpath);
 
+        free(installbtn->text);
         installbtn->text = CopyTextUtil("Enable Mod");
         selectedmodentry->type = 1;
     }
