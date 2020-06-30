@@ -54,7 +54,7 @@ ShapeLinker_t *CreateMainMenu() { // Add functions later
     diritems = ListFolder("/mods");
 
     if (diritems != NULL)
-        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W, SCREEN_H - 150), 50, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_AQUA, COLOR_WHITE, 0, diritems, ModFolderMenu, NULL, FONT_TEXT[FSize28]), ListViewType);
+        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W, SCREEN_H - 150), 40, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_AQUA, COLOR_WHITE, 0, diritems, ModFolderMenu, NULL, FONT_TEXT[FSize28]), ListViewType);
     
     ShapeLinkAdd(&out, ButtonCreate(POS(0,0,200,50), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Exit", FONT_TEXT[FSize28], exitFunc), ButtonType);
     ShapeLinkAdd(&out, GlyphCreate(9, 9, BUTTON_PLUS, COLOR_WHITE, FONT_BTN[FSize30]), GlyphType);
@@ -105,7 +105,7 @@ ShapeLinker_t *CreateModFolderMenu(char *gameName){
     diritems = ListFolderWithEnabledEntries(folder);
 
     if (diritems != NULL){
-        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W / 2, SCREEN_H - 150), 50, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, diritems, NULL, ModMenuSelectionChange, FONT_TEXT[FSize28]), ListViewType);
+        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W / 2, SCREEN_H - 150), 40, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, diritems, NULL, ModMenuSelectionChange, FONT_TEXT[FSize28]), ListViewType);
         ShapeLinkAdd(&out, RectangleCreate(POS(SCREEN_W / 2, 150, SCREEN_W / 2, SCREEN_H - 150), COLOR_BLUEGREY, 1), RectangleType);
         ShapeLinkAdd(&out, TextCenteredCreate(POS(SCREEN_W / 2 + 10, 160, SCREEN_W / 2 - 20, SCREEN_H - 320), "No description...", COLOR_WHITE, FONT_TEXT[FSize28]), TextBoxType);
         ShapeLinkAdd(&out, ButtonCreate(POS(SCREEN_W / 2 + 10, SCREEN_H - 85, SCREEN_W / 2 - 20, 75), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_DARKERGREY, 0, ButtonStyleBottomStrip, "Enable Mod", FONT_TEXT[FSize35], InstallMod), ButtonType);
@@ -140,7 +140,7 @@ ShapeLinker_t *CreateConflictMenu(ShapeLinker_t *list){
     ShapeLinker_t *out = NULL;
 
     ShapeLinkAdd(&out, ButtonCreate(POS(0, 0, SCREEN_W, 50), COLOR_GREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Back", FONT_TEXT[FSize28], exitFunc), ButtonType);
-    ShapeLinkAdd(&out, ListViewCreate(POS(0, 50, SCREEN_W, SCREEN_H - 50), 50, COLOR_DARKERGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, list, NULL, NULL, FONT_TEXT[FSize28]), ListViewType);
+    ShapeLinkAdd(&out, ListViewCreate(POS(0, 50, SCREEN_W, SCREEN_H - 50), 40, COLOR_DARKERGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, list, NULL, NULL, FONT_TEXT[FSize28]), ListViewType);
 
     return out;
 }

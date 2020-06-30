@@ -174,7 +174,7 @@ void SelectSelection(Context_t *ctx){
 int menuRun = 1;
 
 Context_t MakeMenu(ShapeLinker_t *in, int startelement){
-    int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 25;
+    int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 21;
     Context_t ctx = {startelement, 0, NULL, in, 0,0,0};
     ctx.selected = ShapeLinkOffset(ctx.all, ctx.curOffset);
     SelectSelection(&ctx);
@@ -230,21 +230,24 @@ Context_t MakeMenu(ShapeLinker_t *in, int startelement){
             touchSelection = CheckTouchCollision(ctx.all);
         }
 
-        else if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP)){            
+        else if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP)){            
             int direction = 0, res = -1;
-        
+            
+            if (timer > 1 && ctx.kHeld & (KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP))
+                timer = 1;
+
             if (timer == 0){
                 timer = timeOfTimer;
                 if (timeOfTimer > 6)
-                    timeOfTimer -= 5;
+                    timeOfTimer -= 6;
 
-                if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_DDOWN))
+                if (ctx.kHeld & (KEY_LSTICK_DOWN | KEY_DDOWN | KEY_RSTICK_DOWN))
                     direction = DirectionDown;
-                else if (ctx.kHeld & (KEY_LSTICK_UP | KEY_DUP))
+                else if (ctx.kHeld & (KEY_LSTICK_UP | KEY_DUP | KEY_RSTICK_UP))
                     direction = DirectionUp;
-                else if (ctx.kHeld & (KEY_LSTICK_LEFT | KEY_DLEFT))
+                else if (ctx.kHeld & (KEY_LSTICK_LEFT | KEY_DLEFT | KEY_RSTICK_LEFT))
                     direction = DirectionLeft;
-                else if (ctx.kHeld & (KEY_LSTICK_RIGHT | KEY_DRIGHT))
+                else if (ctx.kHeld & (KEY_LSTICK_RIGHT | KEY_DRIGHT | KEY_RSTICK_RIGHT))
                     direction = DirectionRight;
 
                 if (ctx.selected->type == ListViewType){
@@ -289,9 +292,9 @@ Context_t MakeMenu(ShapeLinker_t *in, int startelement){
             ctx.origin = OriginButtonPress;
             return ctx;
         }
-        else if (!(ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP))){
+        else if (!(ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP))){
             timer = 0;
-            timeOfTimer = 25;
+            timeOfTimer = 21;
         }
 
         if (ctx.selected->type == ListViewType){
