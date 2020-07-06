@@ -225,8 +225,14 @@ void DrawListView(ListView_t *listview){
 
         Text_t text = {listview->pos.x + 5, listview->pos.y + curPixOffset + ((listview->entrySize - info.h) / 2), (char*)link->item, textColor, listview->font};
 
-        if (currentListOffset == listview->highlight && listview->options & LIST_SELECTED){
-            Rectangle_t high = {POS(listview->pos.x, listview->pos.y + curPixOffset, listview->pos.w, listview->entrySize), (listview->options & LIST_PRESSED) ? listview->pressed : listview->selected, 1};
+        if (currentListOffset == listview->highlight && listview->options & (LIST_SELECTED | LIST_ALWAYSRENDERSELECTED)){
+            SDL_Color color = (listview->options & LIST_PRESSED) ? listview->pressed : listview->selected;
+
+            if (listview->options & LIST_ALWAYSRENDERSELECTED && !(listview->options & LIST_SELECTED)){
+                color.a = 100;
+            }
+
+            Rectangle_t high = {POS(listview->pos.x, listview->pos.y + curPixOffset, listview->pos.w, listview->entrySize), color, 1};
             DrawRectSDL(&high);
         }
 

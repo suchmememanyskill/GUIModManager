@@ -173,10 +173,21 @@ void SelectSelection(Context_t *ctx){
 
 int menuRun = 1;
 
-Context_t MakeMenu(ShapeLinker_t *in, int startelement){
+Context_t MakeMenu(ShapeLinker_t *in, func_ptr buttonHandler){
     int selectionMade = 0, touchSelection = -1, timer = 0, timeOfTimer = 21;
-    Context_t ctx = {startelement, 0, NULL, in, 0,0,0};
-    ctx.selected = ShapeLinkOffset(ctx.all, ctx.curOffset);
+    Context_t ctx = {0, 0, NULL, in, 0,0,0};
+    
+    for (ShapeLinker_t *iter = in; iter != NULL; iter = iter->next){
+        if (iter->type >= ListViewType){
+            ctx.selected = iter;
+            break;
+        }
+        ctx.curOffset++;
+    }
+
+    if (ctx.selected == NULL)
+        return (Context_t){0};
+    
     SelectSelection(&ctx);
 
     while (menuRun){
@@ -289,8 +300,11 @@ Context_t MakeMenu(ShapeLinker_t *in, int startelement){
             }
         }
         else if (ctx.kDown){
-            ctx.origin = OriginButtonPress;
-            return ctx;
+            if (buttonHandler != NULL){
+                ctx.origin = OriginButtonPress;
+                if (buttonHandler(&ctx) < 0)
+                    return ctx;
+            }
         }
         else if (!(ctx.kHeld & (KEY_LSTICK_DOWN | KEY_LSTICK_LEFT | KEY_LSTICK_RIGHT | KEY_LSTICK_UP | KEY_DDOWN | KEY_DLEFT | KEY_DRIGHT | KEY_DUP | KEY_RSTICK_DOWN | KEY_RSTICK_LEFT | KEY_RSTICK_RIGHT | KEY_RSTICK_UP))){
             timer = 0;

@@ -41,6 +41,13 @@ int RebootToAtmosphere(Context_t *ctx){
     return RebootToPayload("/atmosphere/reboot_payload.bin");
 }
 
+int ButtonHandlerBExit(Context_t *ctx){
+    if (ctx->kHeld & KEY_B)
+        return -1;
+
+    return 0;
+}
+
 ShapeLinker_t *CreateMainMenu() { // Add functions later
     ShapeLinker_t *out = NULL;
 
@@ -48,20 +55,19 @@ ShapeLinker_t *CreateMainMenu() { // Add functions later
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 0, SCREEN_W, 50), COLOR_GREY, 1), RectangleType);
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 50, SCREEN_W, 100), COLOR_DARKERGREY, 1), RectangleType);
     ShapeLinkAdd(&out, TextCenteredCreate(POS(0, 50, SCREEN_W, 100), "GUIModManager", COLOR_WHITE, FONT_TEXT[FSize45]), TextCenteredType);
-    ShapeLinkAdd(&out, ButtonCreate(POS(200,0,200,50), COLOR_LIGHTGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleBottomStrip, "Power", FONT_TEXT[FSize28], PowerMenu), ButtonType);
 
     ShapeLinker_t *diritems;
     diritems = ListFolder("/mods");
 
     if (diritems != NULL)
         ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W, SCREEN_H - 150), 40, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_AQUA, COLOR_WHITE, 0, diritems, ModFolderMenu, NULL, FONT_TEXT[FSize28]), ListViewType);
-    
-    ShapeLinkAdd(&out, ButtonCreate(POS(0,0,200,50), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Exit", FONT_TEXT[FSize28], exitFunc), ButtonType);
-    ShapeLinkAdd(&out, GlyphCreate(9, 9, BUTTON_PLUS, COLOR_WHITE, FONT_BTN[FSize30]), GlyphType);
-
-    if (diritems == NULL)
+    else
         ShapeLinkAdd(&out, TextCenteredCreate(POS(10, 160, SCREEN_W, SCREEN_H - 160), "No mods found!\nDoes the /mods folder exist? Does it have any mods?\n\nThe file structure is:\nsd:/mods/[nameofgame]/[nameofmod]/[Contents]/[ContentID]/..", COLOR_WHITE, FONT_TEXT[FSize28]), TextBoxType);
 
+    ShapeLinkAdd(&out, ButtonCreate(POS(0,0,200,50), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Exit", FONT_TEXT[FSize28], exitFunc), ButtonType);
+    ShapeLinkAdd(&out, ButtonCreate(POS(200,0,200,50), COLOR_LIGHTGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleBottomStrip, "Power", FONT_TEXT[FSize28], PowerMenu), ButtonType);
+    ShapeLinkAdd(&out, GlyphCreate(9, 9, BUTTON_PLUS, COLOR_WHITE, FONT_BTN[FSize30]), GlyphType);
+        
     return out;
 }
 
@@ -99,13 +105,12 @@ ShapeLinker_t *CreateModFolderMenu(char *gameName){
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 50, SCREEN_W, 100), COLOR_DARKERGREY, 1), RectangleType);
     ShapeLinkAdd(&out, TextCenteredCreate(POS(0, 50, SCREEN_W, 100), gameName, COLOR_WHITE, FONT_TEXT[FSize35]), TextCenteredType);
     ShapeLinkAdd(&out, RectangleCreate(POS(0, 0, SCREEN_W, 50), COLOR_GREY, 1), RectangleType);  
-    ShapeLinkAdd(&out, ButtonCreate(POS(200,0,200,50), COLOR_LIGHTGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleBottomStrip, "Power", FONT_TEXT[FSize28], PowerMenu), ButtonType);
     
     ShapeLinker_t *diritems;
     diritems = ListFolderWithEnabledEntries(folder);
 
     if (diritems != NULL){
-        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W / 2, SCREEN_H - 150), 40, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, 0, diritems, NULL, ModMenuSelectionChange, FONT_TEXT[FSize28]), ListViewType);
+        ShapeLinkAdd(&out, ListViewCreate(POS(0, 150, SCREEN_W / 2, SCREEN_H - 150), 40, COLOR_LESSBLUEGREY, COLOR_BLUEGREY, COLOR_BLUEGREY, COLOR_WHITE, LIST_ALWAYSRENDERSELECTED, diritems, NULL, ModMenuSelectionChange, FONT_TEXT[FSize28]), ListViewType);
         ShapeLinkAdd(&out, RectangleCreate(POS(SCREEN_W / 2, 150, SCREEN_W / 2, SCREEN_H - 150), COLOR_BLUEGREY, 1), RectangleType);
         ShapeLinkAdd(&out, TextCenteredCreate(POS(SCREEN_W / 2 + 10, 160, SCREEN_W / 2 - 20, SCREEN_H - 320), "No description...", COLOR_WHITE, FONT_TEXT[FSize28]), TextBoxType);
         ShapeLinkAdd(&out, ButtonCreate(POS(SCREEN_W / 2 + 10, SCREEN_H - 85, SCREEN_W / 2 - 20, 75), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_DARKERGREY, 0, ButtonStyleBottomStrip, "Enable Mod", FONT_TEXT[FSize35], InstallMod), ButtonType);
@@ -113,6 +118,7 @@ ShapeLinker_t *CreateModFolderMenu(char *gameName){
     }
     
     ShapeLinkAdd(&out, ButtonCreate(POS(0,0,200,50), COLOR_LIGHTGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Back", FONT_TEXT[FSize28], exitFunc), ButtonType);
+    ShapeLinkAdd(&out, ButtonCreate(POS(200,0,200,50), COLOR_LIGHTGREY, COLOR_MAGENTA, COLOR_WHITE, COLOR_GREYMAGENTA, 0, ButtonStyleBottomStrip, "Power", FONT_TEXT[FSize28], PowerMenu), ButtonType);
 
     if (diritems == NULL){
         char *emptymessage = CopyTextArgsUtil("This is an empty folder :(\nPuts some mods in me!\n\nPath: %s", folder);
@@ -148,12 +154,7 @@ ShapeLinker_t *CreateConflictMenu(ShapeLinker_t *list){
 int PowerMenu(Context_t *ctx){
     ShapeLinker_t *menu = CreatePowerMenu();
 
-    Context_t newCtx = {5};
-    do {
-        newCtx = MakeMenu(menu, newCtx.curOffset);
-        if (newCtx.kDown & KEY_B)
-            break;
-    } while (newCtx.origin < OriginFunction);
+    MakeMenu(menu, ButtonHandlerBExit);
 
     ShapeLinkDispose(&menu);
 
@@ -165,12 +166,7 @@ int ModFolderMenu(Context_t *ctx){
     char *selection = ShapeLinkOffset(lv->text, lv->highlight)->item;
     ShapeLinker_t *menu = CreateModFolderMenu(selection);
 
-    Context_t newCtx = {5};
-    do {
-        newCtx = MakeMenu(menu, newCtx.curOffset);
-        if (newCtx.kDown & KEY_B)
-            break;
-    } while (newCtx.origin < OriginFunction);
+    MakeMenu(menu, ButtonHandlerBExit);
 
     ShapeLinkDispose(&menu);
 
@@ -190,7 +186,7 @@ int ModMenuSelectionChange(Context_t *ctx){
         char *checkpath = CopyTextArgsUtil("%s/ENABLED", fullpath);
         char *descpath = CopyTextArgsUtil("%s/DESCRIPTION", fullpath);
 
-        ShapeLinker_t *descobj = ShapeLinkOffset(ctx->all, 7);
+        ShapeLinker_t *descobj = ShapeLinkOffset(ctx->all, 6);
         TextCentered_t *desctextbox = CAST(TextCentered_t, descobj->item);
 
         ShapeLinker_t *installobj = descobj->next;
@@ -227,14 +223,22 @@ int ModMenuSelectionChange(Context_t *ctx){
     return 0;
 }
 
+int OpenConflictMenu(Context_t *ctx){
+    ShapeLinker_t *menu = ShapeLinkFind(ctx->all, DataType)->item;
+
+    MakeMenu(menu, ButtonHandlerBExit);
+
+    return 0;
+}
+
 int InstallMod(Context_t *ctx){
     ShapeLinker_t *menu = CreateInstallScreen();
     RenderShapeLinkList(menu);
 
-    TextCentered_t *gameitemcast = ShapeLinkOffset(ctx->all, 2)->item;
+    TextCentered_t *gameitemcast = ShapeLinkFind(ctx->all, TextCenteredType)->item;
     char *gamename = gameitemcast->text.text;
    
-    ListView_t *lv = ShapeLinkOffset(ctx->all, 5)->item;
+    ListView_t *lv = ShapeLinkFind(ctx->all, ListViewType)->item;
     ShapeLinker_t *selectedmodentry = ShapeLinkOffset(lv->text, lv->highlight);
     char *modname = selectedmodentry->item;
 
@@ -248,7 +252,7 @@ int InstallMod(Context_t *ctx){
 
     ShapeLinker_t *conflictMenu = CreateConflictMenu(conflict);
 
-    TextCentered_t *toptext = ShapeLinkOffset(menu, 3)->item;
+    TextCentered_t *toptext = ShapeLinkFind(menu, TextCenteredType)->item;
 
     Button_t *installbtn = ctx->selected->item;
 
@@ -258,32 +262,15 @@ int InstallMod(Context_t *ctx){
             toptext->text.text = CopyTextArgsUtil("%d file conflict(s) found!", ShapeLinkCount(conflict));
             ShapeLinker_t *last = ShapeLinkOffset(menu, ShapeLinkCount(menu) - 1);
 
-            ShapeLinkAdd(&menu, ButtonCreate(POS(300, 435, 226, 75), COLOR_DARKGREY, COLOR_BLUE, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Show Conflicts", FONT_TEXT[FSize28], exitFunc), ButtonType);
+            ShapeLinkAdd(&menu, ButtonCreate(POS(300, 435, 226, 75), COLOR_DARKGREY, COLOR_BLUE, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Show Conflicts", FONT_TEXT[FSize28], OpenConflictMenu),ButtonType);
             ShapeLinkAdd(&menu, ButtonCreate(POS(526, 435, 227, 75), COLOR_DARKGREY, COLOR_AQUA, COLOR_WHITE, COLOR_BLUEGREY, 0, ButtonStyleBottomStrip, "Back", FONT_TEXT[FSize28], exitFunc), ButtonType);
             ShapeLinkAdd(&menu, ButtonCreate(POS(753, 435, 227, 75), COLOR_DARKGREY, COLOR_RED, COLOR_WHITE, COLOR_DARKRED, 0, ButtonStyleBottomStrip, "Overwrite", FONT_TEXT[FSize28], exitFunc), ButtonType);
-
+            ShapeLinkAdd(&menu, conflictMenu, DataType);
             
-            Context_t newCtx = {6};
-            do {
-                newCtx = MakeMenu(menu, newCtx.curOffset);
-                if (newCtx.kDown & KEY_B) 
-                    break;
+            Context_t newCtx = MakeMenu(menu, ButtonHandlerBExit);
 
-                if (newCtx.curOffset == 4 && newCtx.origin == OriginFunction){
-                    Context_t newerCtx = {0};
-
-                    do {
-                        newerCtx = MakeMenu(conflictMenu, newerCtx.curOffset);
-                        if (newerCtx.kDown & KEY_B) 
-                            break;
-                    } while (newerCtx.origin < OriginFunction);
-
-                    newCtx.origin = OriginButtonPress;
-                }
-                if ((newCtx.curOffset == 5 && newCtx.origin == OriginFunction) || newCtx.origin == OriginPlus){
-                    goto out;
-                }
-            } while (newCtx.origin < OriginFunction);
+            if ((newCtx.curOffset == 5 && newCtx.origin == OriginFunction) || newCtx.origin == OriginPlus)
+                goto out;
             
             ButtonFree(CAST(Button_t, last->next->next->next->item));
             ButtonFree(CAST(Button_t, last->next->next->item));

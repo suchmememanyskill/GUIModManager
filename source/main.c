@@ -24,28 +24,10 @@ int main(int argc, char* argv[])
     err -= FontInit();
     err -= SetCfwFolder();
 
-    if (err){
-        /*
-        ClearRenderer();
-        DrawTextSDL(TextCreate(10, 10, "Init failed! Press + to exit", COLOR(255,255,255,255), FONT_TEXT[FSize23]));
-        UpdateRenderer();
-
-        u64 kDown = 0;
-        while (!(kDown & KEY_PLUS)){
-            hidScanInput();
-            kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        }
-        */
-
-       // Just exit the app lol
-    }
-    else {
+    if (!err){
         ShapeLinker_t *mainMenu = CreateMainMenu();
     
-        Context_t ctx = {5};
-        do {
-            ctx = MakeMenu(mainMenu, ctx.curOffset);
-        } while (ctx.origin < OriginFunction);
+        MakeMenu(mainMenu, NULL);
 
         ShapeLinkDispose(&mainMenu);
     }

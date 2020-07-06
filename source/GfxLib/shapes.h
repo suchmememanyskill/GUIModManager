@@ -40,6 +40,8 @@ enum ShapeTypes{
     ImageType,
     RectangleOutlineType,
     ProgressBarType,
+    ListItemType,
+    DataType, // This is an invalid type, this also won't get cleaned up. this is just that you can safely add an entry to the list and read (and find) it back later.
     ListViewType,
     ButtonType,
 };
@@ -97,6 +99,12 @@ typedef struct {
     u64 kDown, kUp, kHeld;
 } Context_t;
 
+typedef struct {
+    SDL_Color leftcolor, rightcolor;
+    SDL_Texture *leftimg;
+    char *lefttext, *righttext;
+} ListItem_t;
+
 typedef int (*func_ptr)(Context_t *ctx);
 
 #define SETBIT(object, shift, value) ((value) ? (object |= shift) : (object &= ~shift))
@@ -125,6 +133,7 @@ typedef struct {
 #define LIST_AUTO BIT(1)
 #define LIST_PRESSED BIT(2)
 #define LIST_SELECTED BIT(3)
+#define LIST_ALWAYSRENDERSELECTED BIT(4)
 
 typedef struct {
     SDL_Rect pos;

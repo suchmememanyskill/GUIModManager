@@ -104,3 +104,15 @@ void ShapeLinkMergeLists(ShapeLinker_t **dst, ShapeLinker_t *add){
         iter->next = add;
     }
 }
+
+ShapeLinker_t *ShapeLinkFind(ShapeLinker_t  *start, int find){
+    ShapeLinker_t *iter = start;
+
+    for (;iter != NULL; iter = iter->next){
+        if (iter->type == find){
+            return iter;
+        }
+    }
+
+    return NULL;
+}
